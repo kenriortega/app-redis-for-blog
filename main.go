@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -146,11 +148,11 @@ func DrainBody(respBody io.ReadCloser) {
 	// (typically Transport) may not be able to re-use a persistent TCP
 	// connection to the server for a subsequent "keep-alive" request.
 	if respBody != nil {
-	  // Drain any remaining Body and then close the connection.
-	  // Without this closing connection would disallow re-using
-	  // the same connection for future uses.
-	  //  - http://stackoverflow.com/a/17961593/4465767
-	  defer respBody.Close()
-	  _, _ = io.Copy(ioutil.Discard, respBody)
+		// Drain any remaining Body and then close the connection.
+		// Without this closing connection would disallow re-using
+		// the same connection for future uses.
+		//  - http://stackoverflow.com/a/17961593/4465767
+		defer respBody.Close()
+		_, _ = io.Copy(ioutil.Discard, respBody)
 	}
-  }
+}
