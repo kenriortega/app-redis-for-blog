@@ -1,6 +1,7 @@
 package main
 
 import (
+	"app/pkg/db"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -9,7 +10,6 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"os"
 	"time"
 
 	"github.com/go-redis/redis/v8"
@@ -41,30 +41,19 @@ func (r *ResponseCoins) ToJSON() string {
 	}
 	return string(bytes)
 }
-
-func main() {
-	// Create redis instance
-	rdb := GetRedisDbClient(context.Background())
-
-	url := fmt.Sprintf("%s/%s/%s", urlBase, urlVersion, resourceCoinList)
-	fmt.Println("Fetching all coins from: ", url)
-
-	start := time.Now()
-	resp, err := getCoins(
-		context.Background(),
-		rdb,
-		"GET",
-		url,
-		"coins:list",
-		10*time.Second,
-	)
-	if err != nil {
-		log.Fatal(err)
+func drainBody(respBody io.ReadCloser) {
+	// Callers should close resp.Body when done reading from it.
+	// If resp.Body is not closed, the Client's underlying RoundTripper
+	// (typically Transport) may not be able to re-use a persistent TCP
+	// connection to the server for a subsequent "keep-alive" request.
+	if respBody != nil {
+		// Drain any remaining Body and then close the connection.
+		// Without this closing connection would disallow re-using
+		// the same connection for future uses.
+		//  - http://stackoverflow.com/a/17961593/4465767
+		defer respBody.Close()
+		_, _ = io.Copy(ioutil.Discard, respBody)
 	}
-	elapsed := time.Since(start)
-	resp.ResponseTime = elapsed.String()
-
-	fmt.Printf("Fetched [%d] coins from source: %s response time: %s\n", len(resp.Coins), resp.Source, resp.ResponseTime)
 }
 
 // getCoins ...
@@ -81,7 +70,6 @@ func getCoins(
 	} else if err != nil {
 		return
 	}
-
 	if result != "" {
 		err = json.Unmarshal([]byte(result), &responeCoins)
 		if err != nil {
@@ -106,7 +94,7 @@ func getCoins(
 	if err != nil {
 		return
 	}
-	defer DrainBody(res.Body)
+	defer drainBody(res.Body)
 
 	coins := []Coin{}
 	if err = json.NewDecoder(res.Body).Decode(&coins); err != nil {
@@ -121,38 +109,27 @@ func getCoins(
 	return
 }
 
-// Create redis instance
-func GetRedisDbClient(ctx context.Context) *redis.Client {
+func main() {
+	// Create redis instance
+	rdb := db.GetRedisDbClient(context.Background())
 
-	clientInstance := redis.NewClient(&redis.Options{
-		Addr:         os.Getenv("REDIS_URI"),
-		Username:     "",
-		Password:     os.Getenv("REDIS_PASS"),
-		DB:           0,
-		DialTimeout:  60 * time.Second,
-		ReadTimeout:  60 * time.Second,
-		WriteTimeout: 60 * time.Second,
-	})
+	url := fmt.Sprintf("%s/%s/%s", urlBase, urlVersion, resourceCoinList)
+	fmt.Println("Fetching all coins from: ", url)
 
-	_, err := clientInstance.Ping(context.TODO()).Result()
+	start := time.Now()
+	resp, err := getCoins(
+		context.Background(),
+		rdb,
+		"GET",
+		url,
+		"coins:list",
+		60*time.Second,
+	)
 	if err != nil {
 		log.Fatal(err)
 	}
+	elapsed := time.Since(start)
+	resp.ResponseTime = elapsed.String()
 
-	return clientInstance
-}
-
-func DrainBody(respBody io.ReadCloser) {
-	// Callers should close resp.Body when done reading from it.
-	// If resp.Body is not closed, the Client's underlying RoundTripper
-	// (typically Transport) may not be able to re-use a persistent TCP
-	// connection to the server for a subsequent "keep-alive" request.
-	if respBody != nil {
-		// Drain any remaining Body and then close the connection.
-		// Without this closing connection would disallow re-using
-		// the same connection for future uses.
-		//  - http://stackoverflow.com/a/17961593/4465767
-		defer respBody.Close()
-		_, _ = io.Copy(ioutil.Discard, respBody)
-	}
+	fmt.Printf("Fetched [%d] coins from source: %s response time: %s\n", len(resp.Coins), resp.Source, resp.ResponseTime)
 }
