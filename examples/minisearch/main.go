@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/go-redis/redis/v8"
 )
@@ -69,7 +70,7 @@ func main() {
 	// cmd managements
 	switch action {
 	case "seed":
-		log.Println("Populate pizza data on redis")
+		start := time.Now()
 		var path, _ = os.Getwd()
 		// ingest data from csv to redis using pipeline cmd
 		ingestDataToRedis(
@@ -78,6 +79,8 @@ func main() {
 			path,
 			"data/pizzas.csv",
 		)
+		elapsed := time.Since(start)
+		log.Printf("Seed pizza data on redis [%s]\n", elapsed.String())
 	}
 
 }
