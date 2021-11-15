@@ -30,6 +30,10 @@ func CreateIndexRedisSearch(ctx context.Context, rdb *redis.Client) {
 		"ON", "hash",
 		"PREFIX", 1, "pizza",
 		"SCHEMA",
+		"description", "TEXT",
+		"page_url", "TEXT",
+		"category", "TEXT",
+		"primary_category", "TEXT",
 		"country", "TAG",
 		"currency", "TAG",
 	)

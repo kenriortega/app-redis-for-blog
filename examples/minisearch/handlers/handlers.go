@@ -60,6 +60,21 @@ func (h *Handler) FindPizzasByCountry(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	query := r.URL.Query().Get("q")
+	data, err := findQuery(
+		r.Context(),
+		h.rdb,
+		query,
+	)
+	if err != nil {
+		writeResponse(w, http.StatusBadRequest, err)
+	} else {
+		writeResponse(w, http.StatusOK, data)
+	}
+}
+
 func findQuery(ctx context.Context, rdb *redis.Client, query string) (map[string]interface{}, error) {
 	data := make(map[string]interface{})
 	var values []interface{}
