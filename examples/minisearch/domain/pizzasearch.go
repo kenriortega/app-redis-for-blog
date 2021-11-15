@@ -34,6 +34,7 @@ func CreateIndexRedisSearch(ctx context.Context, rdb *redis.Client) {
 		"page_url", "TEXT",
 		"category", "TEXT",
 		"primary_category", "TEXT",
+		"location", "GEO",
 		"country", "TAG",
 		"currency", "TAG",
 	)

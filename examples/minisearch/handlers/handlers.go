@@ -75,6 +75,32 @@ func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (h *Handler) FindNearPizzas(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	longitude := r.URL.Query().Get("lon")
+	latitude := r.URL.Query().Get("lat")
+	radius := r.URL.Query().Get("r")
+	unit := r.URL.Query().Get("u")
+
+	data, err := findQuery(
+		r.Context(),
+		h.rdb,
+		fmt.Sprintf(
+			`@location:[%s %s %s %s]`,
+			longitude,
+			latitude,
+			radius,
+			unit,
+		),
+	)
+	if err != nil {
+		writeResponse(w, http.StatusBadRequest, err)
+	} else {
+		writeResponse(w, http.StatusOK, data)
+	}
+}
+
 func findQuery(ctx context.Context, rdb *redis.Client, query string) (map[string]interface{}, error) {
 	data := make(map[string]interface{})
 	var values []interface{}
