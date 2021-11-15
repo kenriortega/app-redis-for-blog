@@ -1,11 +1,16 @@
 package model
 
 import (
+	"context"
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 	"time"
+
+	"github.com/go-redis/redis/v8"
 )
 
 // PizzaRestaurant ...
@@ -70,4 +75,40 @@ func (p *PizzaRestaurant) ToMAP() (toHashMap map[string]interface{}, err error) 
 	}
 
 	return toHashMap, nil
+}
+
+// Run excute a simple task to load data from csv pizza to redis
+func Run(
+	ctx context.Context,
+	rdb *redis.Client,
+	path, filename string,
+) {
+	pipe := rdb.Pipeline()
+
+	csvFile, err := os.Open(fmt.Sprintf("%s/%s", path, filename))
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer csvFile.Close()
+
+	csvLines, err := csv.NewReader(csvFile).ReadAll()
+	if err != nil {
+		log.Fatal(err)
+	}
+	for index, line := range csvLines[1:] {
+
+		pizzaR := NewPizzaR(line)
+
+		key := fmt.Sprintf(`pizza:%s_%d`, pizzaR.ID, index)
+		value, err := pizzaR.ToMAP()
+		if err != nil {
+			log.Fatal(err)
+		}
+		pipe.HSet(ctx, key, value)
+	}
+	_, err = pipe.Exec(ctx)
+	if err != nil {
+		panic(err)
+	}
+	log.Println("Successfully Ingested CSV file on redis")
 }
