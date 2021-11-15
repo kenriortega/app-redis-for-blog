@@ -1,14 +1,18 @@
 package main
 
 import (
+	"app/examples/minisearch/handlers"
 	"app/examples/minisearch/model"
 	"app/pkg/db"
 	"app/pkg/httpsrv"
 	"context"
 	"flag"
 	"log"
+	"net/http"
 	"os"
 	"time"
+
+	"github.com/gorilla/mux"
 )
 
 var (
@@ -31,7 +35,12 @@ func main() {
 
 	switch action {
 	case "web":
-		srv := httpsrv.NewServer(host, port, nil)
+		r := mux.NewRouter()
+		h := handlers.New(rdb)
+
+		r.HandleFunc("/", h.Index).Methods(http.MethodGet)
+
+		srv := httpsrv.NewServer(host, port, r)
 		srv.Start()
 	case "seed":
 		start := time.Now()
