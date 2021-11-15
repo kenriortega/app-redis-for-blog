@@ -30,14 +30,14 @@ type PizzaRestaurant struct {
 	Name            string `json:"name,omitempty"`
 }
 
-func NewPizzaR(line []string) PizzaRestaurant {
+func NewPizzaR(line []string, index int) PizzaRestaurant {
 	dateToParse := strings.Split(line[1], "T")[0]
 	date, err := time.Parse("2006-01-02", dateToParse)
 	if err != nil {
 		log.Fatal(err)
 	}
 	return PizzaRestaurant{
-		ID:              line[0],
+		ID:              fmt.Sprintf(`%s_%d`, line[0], index),
 		DateAdded:       fmt.Sprintf("%d", date.Unix()),
 		Address:         line[3],
 		Category:        line[4],
@@ -77,8 +77,8 @@ func (p *PizzaRestaurant) ToMAP() (toHashMap map[string]interface{}, err error) 
 	return toHashMap, nil
 }
 
-// Run excute a simple task to load data from csv pizza to redis
-func Run(
+// IngestData excute a simple task to load data from csv pizza to redis
+func IngestData(
 	ctx context.Context,
 	rdb *redis.Client,
 	path, filename string,
@@ -97,9 +97,9 @@ func Run(
 	}
 	for index, line := range csvLines[1:] {
 
-		pizzaR := NewPizzaR(line)
+		pizzaR := NewPizzaR(line, index)
 
-		key := fmt.Sprintf(`pizza:%s_%d`, pizzaR.ID, index)
+		key := fmt.Sprintf(`pizza:%s`, pizzaR.ID)
 		value, err := pizzaR.ToMAP()
 		if err != nil {
 			log.Fatal(err)

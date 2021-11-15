@@ -1,0 +1,22 @@
+### index
+GET http://localhost:8000/
+
+### Stats by date
+GET http://localhost:8000/pizzas/stats?date=2017-06-19
+### Stats by country
+GET http://localhost:8000/pizzas/stats/country?country=US
+
+### Search full text endpoint
+GET http://localhost:8000/search?q=www.singlepage.com
+
+### Search full text endpoint range time
+GET http://localhost:8000/search?q=www.singlepage.com&start=2017-06-19&end=2017-06-30
+
+### Find pizzas near by longitude, latitude, radius, unit(km|mi)
+GET http://localhost:8000/pizzas/near?lon=-76.566984&lat=39.28663&r=10&u=km
+
+### Find by country
+GET http://localhost:8000/pizzas/country/US
+
+### Find by ID
+GET http://localhost:8000/pizzas/AVweQXtMByjofQCxwoHf_9794

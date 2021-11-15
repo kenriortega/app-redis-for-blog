@@ -41,7 +41,8 @@ func main() {
 		r.HandleFunc("/", h.Index).Methods(http.MethodGet)
 		r.HandleFunc("/search", h.Search).Methods(http.MethodGet)
 		r.HandleFunc("/pizzas/near", h.FindNearPizzas).Methods(http.MethodGet)
-		r.HandleFunc("/pizzas/{country}", h.FindPizzasByCountry).Methods(http.MethodGet)
+		r.HandleFunc("/pizzas/stats", h.StatsByDate).Methods(http.MethodGet)
+		r.HandleFunc("/pizzas/country/{country}", h.FindPizzasByCountry).Methods(http.MethodGet)
 		r.HandleFunc("/pizzas/{id}", h.FindPizzaByID).Methods(http.MethodGet)
 
 		srv := httpsrv.NewServer(host, port, r)
@@ -49,7 +50,7 @@ func main() {
 	case "seed":
 		start := time.Now()
 		var path, _ = os.Getwd()
-		domain.Run(ctx, rdb, path, "data/pizzas.csv")
+		domain.IngestData(ctx, rdb, path, "data/pizzas.csv")
 		elapsed := time.Since(start)
 		log.Printf("Seed pizza data on redis [%s]\n", elapsed.String())
 	case "create:index":
