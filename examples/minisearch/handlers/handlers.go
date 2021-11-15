@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"app/examples/minisearch/domain"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -47,18 +48,37 @@ func (h *Handler) FindPizzaByID(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) FindPizzasByCountry(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(r)
-	result, err := h.rdb.Do(
+	data, err := findQuery(
 		r.Context(),
+		h.rdb,
+		fmt.Sprintf(`@country:{%s}`, params["country"]),
+	)
+	if err != nil {
+		writeResponse(w, http.StatusBadRequest, err)
+	} else {
+		writeResponse(w, http.StatusOK, data)
+	}
+}
+
+func findQuery(ctx context.Context, rdb *redis.Client, query string) (map[string]interface{}, error) {
+	data := make(map[string]interface{})
+	var values []interface{}
+
+	result, err := rdb.Do(
+		ctx,
 		"FT.SEARCH",
 		domain.INDEX,
-		fmt.Sprintf(`@country:{%s}`, params["country"]),
+		query,
 		"LIMIT",
 		0,
 		100,
 	).Result()
+	if err != nil {
+		return nil, err
+	}
 	total := result.([]interface{})[0]
 	docs := result.([]interface{})[1:]
-	var values []interface{}
+
 	for i, doc := range docs {
 		if i%2 != 0 {
 			value := make(map[string]interface{})
@@ -76,15 +96,10 @@ func (h *Handler) FindPizzasByCountry(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	data := make(map[string]interface{})
 	data["total"] = total
 	data["total_peer_page"] = len(values)
 	data["docs"] = values
-	if err != nil {
-		writeResponse(w, http.StatusBadRequest, err)
-	} else {
-		writeResponse(w, http.StatusOK, data)
-	}
+	return data, nil
 }
 
 func writeResponse(w http.ResponseWriter, code int, data interface{}) {
