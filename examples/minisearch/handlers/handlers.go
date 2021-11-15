@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"app/examples/minisearch/domain"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -35,6 +36,25 @@ func (h *Handler) FindPizzaByID(w http.ResponseWriter, r *http.Request) {
 	result, err := h.rdb.HGetAll(
 		r.Context(),
 		fmt.Sprintf(`pizza:%s`, params["id"]),
+	).Result()
+	if err != nil {
+		writeResponse(w, http.StatusBadRequest, err)
+	} else {
+		writeResponse(w, http.StatusOK, result)
+	}
+}
+
+func (h *Handler) FindPizzasByCountry(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	params := mux.Vars(r)
+	result, err := h.rdb.Do(
+		r.Context(),
+		"FT.SEARCH",
+		domain.INDEX,
+		fmt.Sprintf(`@country:{%s}`, params["country"]),
+		"LIMIT",
+		0,
+		100,
 	).Result()
 	if err != nil {
 		writeResponse(w, http.StatusBadRequest, err)

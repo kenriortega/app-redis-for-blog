@@ -39,6 +39,7 @@ func main() {
 		h := handlers.New(rdb)
 
 		r.HandleFunc("/", h.Index).Methods(http.MethodGet)
+		r.HandleFunc("/{country}", h.FindPizzasByCountry).Methods(http.MethodGet)
 		r.HandleFunc("/{id}", h.FindPizzaByID).Methods(http.MethodGet)
 
 		srv := httpsrv.NewServer(host, port, r)
@@ -49,6 +50,8 @@ func main() {
 		domain.Run(ctx, rdb, path, "data/pizzas.csv")
 		elapsed := time.Since(start)
 		log.Printf("Seed pizza data on redis [%s]\n", elapsed.String())
+	case "create:index":
+		domain.CreateIndexRedisSearch(ctx, rdb)
 	}
 
 }
