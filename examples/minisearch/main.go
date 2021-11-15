@@ -2,6 +2,7 @@ package main
 
 import (
 	"app/pkg/db"
+	"app/pkg/httpsrv"
 	"context"
 	"encoding/csv"
 	"flag"
@@ -30,7 +31,9 @@ func main() {
 	rdb := db.GetRedisDbClient(context.Background())
 	// cmd managements
 	switch action {
-
+	case "web":
+		srv := httpsrv.NewServer("0.0.0.0", 8000, nil)
+		srv.Start()
 	case "seed":
 		start := time.Now()
 		var path, _ = os.Getwd()
