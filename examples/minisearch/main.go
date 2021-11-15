@@ -18,11 +18,15 @@ import (
 
 var (
 	action string
+	host   = "0.0.0.0"
+	port   = 8000
 )
 
 func init() {
 	// cmds
 	flag.StringVar(&action, "action", "seed", "seed pizza data on redis")
+	flag.StringVar(&host, "host", host, "host address to serve web server")
+	flag.IntVar(&port, "port", port, "port to expose our web server")
 	flag.Parse()
 }
 func main() {
@@ -32,7 +36,7 @@ func main() {
 	// cmd managements
 	switch action {
 	case "web":
-		srv := httpsrv.NewServer("0.0.0.0", 8000, nil)
+		srv := httpsrv.NewServer(host, port, nil)
 		srv.Start()
 	case "seed":
 		start := time.Now()
