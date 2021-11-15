@@ -40,8 +40,9 @@ func main() {
 
 		r.HandleFunc("/", h.Index).Methods(http.MethodGet)
 		r.HandleFunc("/search", h.Search).Methods(http.MethodGet)
-		r.HandleFunc("/pizza/{country}", h.FindPizzasByCountry).Methods(http.MethodGet)
-		r.HandleFunc("/pizza/{id}", h.FindPizzaByID).Methods(http.MethodGet)
+		r.HandleFunc("/pizzas/near", h.FindNearPizzas).Methods(http.MethodGet)
+		r.HandleFunc("/pizzas/{country}", h.FindPizzasByCountry).Methods(http.MethodGet)
+		r.HandleFunc("/pizzas/{id}", h.FindPizzaByID).Methods(http.MethodGet)
 
 		srv := httpsrv.NewServer(host, port, r)
 		srv.Start()
