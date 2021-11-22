@@ -112,3 +112,33 @@ func IngestData(
 	}
 	log.Println("Successfully Ingested CSV file on redis")
 }
+
+// IngestDataJSON excute a simple task to load data from csv pizza to redis
+// using redisJson
+func IngestDataJSON(
+	ctx context.Context,
+	rdb *redis.Client,
+	path, filename string,
+) {
+	pipe := rdb.Pipeline()
+	csvFile, err := os.Open(fmt.Sprintf("%s/%s", path, filename))
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer csvFile.Close()
+
+	csvLines, err := csv.NewReader(csvFile).ReadAll()
+	if err != nil {
+		log.Fatal(err)
+	}
+	for index, line := range csvLines[1:] {
+		pizzaR := NewPizzaR(line, index)
+		key := fmt.Sprintf(`pizzas:json:%s`, pizzaR.ID)
+		pipe.Do(ctx, "JSON.SET", key, ".", pizzaR.ToJSON())
+	}
+	_, err = pipe.Exec(ctx)
+	if err != nil {
+		panic(err)
+	}
+	log.Println("Successfully Ingested CSV file on redis")
+}
