@@ -47,14 +47,23 @@ func main() {
 
 		srv := httpsrv.NewServer(host, port, r)
 		srv.Start()
-	case "seed":
+	case "seed:hash":
 		start := time.Now()
 		var path, _ = os.Getwd()
 		domain.IngestData(ctx, rdb, path, "data/pizzas.csv")
 		elapsed := time.Since(start)
 		log.Printf("Seed pizza data on redis [%s]\n", elapsed.String())
+	case "seed:json":
+		start := time.Now()
+		var path, _ = os.Getwd()
+		domain.IngestDataJSON(ctx, rdb, path, "data/pizzas.csv")
+		elapsed := time.Since(start)
+		log.Printf("Seed pizza data on redis [%s]\n", elapsed.String())
+
 	case "create:index":
 		domain.CreateIndexRedisSearch(ctx, rdb)
+	case "create:index:json":
+		domain.CreateIndexJSONRedisSearch(ctx, rdb)
 	}
 
 }
