@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	INDEX = "pizzaIndex"
+	INDEX = "pizzasIdx"
 )
 
 func CreateIndexRedisSearch(ctx context.Context, rdb *redis.Client) {
@@ -57,15 +57,12 @@ func CreateIndexJSONRedisSearch(ctx context.Context, rdb *redis.Client) {
 	_, err = rdb.Do(
 		ctx,
 		`FT.CREATE`, INDEX,
-		"ON", "JSON",
-		"SCHEMA",
-		"description", "TEXT",
-		"page_url", "TEXT",
-		"category", "TEXT",
-		"primary_category", "TEXT",
-		"location", "GEO",
-		"country", "TAG",
-		"currency", "TAG",
+		"ON", "JSON", "SCHEMA",
+		"$.name", "AS", "name", "TEXT",
+		"$.date_added", "AS", "date_added", "NUMERIC",
+		"$.category", "AS", "category", "TEXT",
+		"$.primary_category", "AS", "subcategory", "TEXT",
+		"$.location", "as", "loc", "GEO",
 	).Result()
 	if err != nil {
 		log.Fatal(err)

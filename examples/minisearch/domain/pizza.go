@@ -134,7 +134,7 @@ func IngestDataJSON(
 	for index, line := range csvLines[1:] {
 		pizzaR := NewPizzaR(line, index)
 		key := fmt.Sprintf(`pizzas:json:%s`, pizzaR.ID)
-		pipe.Do(ctx, "JSON.SET", key, ".", pizzaR.ToJSON())
+		pipe.Do(ctx, "JSON.SET", key, "$", pizzaR.ToJSON())
 	}
 	_, err = pipe.Exec(ctx)
 	if err != nil {
